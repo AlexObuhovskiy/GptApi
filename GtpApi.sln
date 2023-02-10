@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GtpApi", "GtpApi\GtpApi.csproj", "{54362040-361F-4FC1-B024-95CB229A6882}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GtpApi.DataModel", "GtpApi.DataModel\GtpApi.DataModel.csproj", "{E4E79E7E-73D7-4B8C-9907-0A7672F23DCF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{54362040-361F-4FC1-B024-95CB229A6882}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54362040-361F-4FC1-B024-95CB229A6882}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54362040-361F-4FC1-B024-95CB229A6882}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54362040-361F-4FC1-B024-95CB229A6882}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4E79E7E-73D7-4B8C-9907-0A7672F23DCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4E79E7E-73D7-4B8C-9907-0A7672F23DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4E79E7E-73D7-4B8C-9907-0A7672F23DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4E79E7E-73D7-4B8C-9907-0A7672F23DCF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {641B2FA6-851E-4DE6-9C50-705C1533E54B}
+	EndGlobalSection
+EndGlobal
