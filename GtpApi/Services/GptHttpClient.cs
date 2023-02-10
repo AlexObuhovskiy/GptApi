@@ -16,24 +16,22 @@ public interface IGptHttpClient
 
 public class GptHttpClient : IGptHttpClient
 {
-    private readonly Uri OpenAiGptUrl = new Uri("https://api.openai.com/v1/completions");
+    private readonly Uri _openAiGptUrl = new("https://api.openai.com/v1/completions");
     private const string Completions = "completions";
     private const string Models = "models";
 
     private readonly HttpClient _httpClient;
-    private readonly IOptions<OpenApiOptions> _gptOptions;
 
     public GptHttpClient(IOptions<OpenApiOptions> gptOptions)
     {
-        _gptOptions = gptOptions;
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _gptOptions.Value.ApiKey);
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", gptOptions.Value.ApiKey);
     }
 
     public async Task<string> GetGptModels()
     {
-        var modelsUri = new Uri(OpenAiGptUrl, Models);
+        var modelsUri = new Uri(_openAiGptUrl, Models);
         var response = await _httpClient.GetAsync(modelsUri);
 
         var responseJson = await response.Content.ReadAsStringAsync();
@@ -54,7 +52,7 @@ public class GptHttpClient : IGptHttpClient
 
         var requestJson = JsonConvert.SerializeObject(request);
         var content = new StringContent(requestJson, Encoding.UTF8, MediaTypeNames.Application.Json);
-        var completionsUri = new Uri(OpenAiGptUrl, Completions);
+        var completionsUri = new Uri(_openAiGptUrl, Completions);
 
         Stopwatch a = new Stopwatch();
         a.Start();
@@ -68,7 +66,7 @@ public class GptHttpClient : IGptHttpClient
 
         var responseJson = await response.Content.ReadAsStringAsync();
         var responseObject = JsonConvert.DeserializeObject<dynamic>(responseJson);
-        string responseText = responseObject.choices[0].text;
+        string responseText = responseObject!.choices[0].text;
 
 
         var gptCompletionResponseDto = new GptCompletionResponseDto

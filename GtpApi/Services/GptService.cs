@@ -1,14 +1,13 @@
 ﻿using GtpApi.DataModel.DataAccess;
 using GtpApi.DataModel.Entities;
 using GtpApi.Dto;
-using System.Text.RegularExpressions;
 
 namespace GtpApi.Services
 {
     public interface IGptService
     {
         Task<string> GetGptModels();
-        Task<GptCompletionResponseDto> GenerateCompletionAsync(string prompt);
+        Task<GptCompletionResponseDto> GenerateCompletionAsync(GenerateTextRequestDto requestDto);
     }
 
     public class GptService : IGptService
@@ -29,12 +28,12 @@ namespace GtpApi.Services
             return _gptHttpClient.GetGptModels();
         }
 
-        public async Task<GptCompletionResponseDto> GenerateCompletionAsync(string prompt)
+        public async Task<GptCompletionResponseDto> GenerateCompletionAsync(GenerateTextRequestDto requestDto)
         {
             var request = new GptCompletionRequestDto
             {
                 Model = "text-davinci-003",
-                Question = prompt,
+                Question = requestDto.Question,
                 MaxTokens = 100,
                 Temperature = 0.5
             };

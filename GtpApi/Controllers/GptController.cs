@@ -1,3 +1,4 @@
+using GtpApi.Dto;
 using GtpApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,9 +25,9 @@ namespace GtpApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GenerateTextAsync(string prompt)
+        public async Task<IActionResult> GenerateTextAsync([FromBody] GenerateTextRequestDto requestDto)
         {
-            var result = await _gptService.GenerateCompletionAsync(prompt);
+            var result = await _gptService.GenerateCompletionAsync(requestDto);
 
             return Ok(result);
         }
