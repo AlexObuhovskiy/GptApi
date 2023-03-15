@@ -31,7 +31,7 @@ namespace GtpApi.Services
 
         public async Task<GptCompletionResponseDto> GenerateCompletionAsync(GenerateCompletionRequestDto requestDto)
         {
-            var request = new GptCompletionRequestDto
+            var request = new CompletionRequestDto
             {
                 //Model = "text-ada-001",
                 Model = "text-davinci-003",
@@ -64,7 +64,7 @@ namespace GtpApi.Services
 
         public async Task<GptCompletionResponseDto> GenerateChatCompletion(GenerateChatCompletionRequestDto requestDto)
         {
-            var request = new GptChatCompletionRequestDto
+            var request = new ChatCompletionRequestDto
             {
                 //Model = "gpt-3.5-turbo",
                 Model = "gpt-3.5-turbo-0301",

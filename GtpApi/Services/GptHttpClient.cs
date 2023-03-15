@@ -1,4 +1,5 @@
 ﻿using GtpApi.Dto;
+using GtpApi.Dto.ChatCompletions;
 using GtpApi.Setup;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -11,8 +12,8 @@ namespace GtpApi.Services;
 public interface IGptHttpClient
 {
     Task<string> GetGptModels();
-    Task<GptCompletionResponseDto> GenerateCompletionAsync(GptCompletionRequestDto requestDto);
-    Task<GptCompletionResponseDto> GenerateChatCompletionAsync(GptChatCompletionRequestDto requestDto);
+    Task<GptCompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto);
+    Task<GptCompletionResponseDto> GenerateChatCompletionAsync(ChatCompletionRequestDto requestDto);
 }
 
 public class GptHttpClient : IGptHttpClient
@@ -41,7 +42,7 @@ public class GptHttpClient : IGptHttpClient
         return responseJson;
     }
 
-    public async Task<GptCompletionResponseDto> GenerateCompletionAsync(GptCompletionRequestDto requestDto)
+    public async Task<GptCompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto)
     {
         var request = new
         {
@@ -53,7 +54,7 @@ public class GptHttpClient : IGptHttpClient
 
         var completionsUri = new Uri(_openAiGptUrl, Completions);
         var gptResponseDto = await SendMessageAsync(completionsUri, request);
-               
+
         var gptCompletionResponseDto = Map(requestDto, gptResponseDto);
         string chatResponseMessage = gptResponseDto.ResponseObject.choices[0].text;
         gptCompletionResponseDto.ChatResponse = chatResponseMessage.TrimStart('\n', '\t', '\r');
@@ -61,28 +62,13 @@ public class GptHttpClient : IGptHttpClient
         return gptCompletionResponseDto;
     }
 
-    public async Task<GptCompletionResponseDto> GenerateChatCompletionAsync(GptChatCompletionRequestDto requestDto)
+    public async Task<GptCompletionResponseDto> GenerateChatCompletionAsync(ChatCompletionRequestDto requestDto)
     {
-        var request = new
-        {
-            model = requestDto.Model,
-            messages = new[] {
-                new 
-                {
-                    role = "system",
-                    content = requestDto.SetupMessage
-                },
-                new
-                {
-                    role = "user",
-                    content = requestDto.Question
-                },
-            }
-        };
+        var request = requestDto.ToGptChatCompletionRequestDto();
 
         var completionsUri = new Uri(_openAiGptUrl, $"{Chat}/{Completions}");
         var gptResponseDto = await SendMessageAsync(completionsUri, request);
-        
+
         var gptCompletionResponseDto = Map(requestDto, gptResponseDto);
         string chatResponseMessage = gptResponseDto.ResponseObject.choices[0].message.content;
         gptCompletionResponseDto.ChatResponse = chatResponseMessage.TrimStart('\n', '\t', '\r');
@@ -113,15 +99,15 @@ public class GptHttpClient : IGptHttpClient
         return result;
     }
 
-    private static GptCompletionResponseDto Map(GptChatCompletionRequestDto requestDto, GptResponseDto gptResponseDto)
+    private static GptCompletionResponseDto Map(ChatCompletionRequestDto requestDto, GptResponseDto gptResponseDto)
     {
-        var gptCompletionResponseDto = Map(requestDto as GptCompletionRequestDto, gptResponseDto);
+        var gptCompletionResponseDto = Map(requestDto as CompletionRequestDto, gptResponseDto);
         gptCompletionResponseDto.ChatSetupMessage = requestDto.SetupMessage;
 
         return gptCompletionResponseDto;
     }
 
-    private static GptCompletionResponseDto Map(GptCompletionRequestDto requestDto, GptResponseDto gptResponseDto)
+    private static GptCompletionResponseDto Map(CompletionRequestDto requestDto, GptResponseDto gptResponseDto)
     {
         var gptCompletionResponseDto = new GptCompletionResponseDto
         {

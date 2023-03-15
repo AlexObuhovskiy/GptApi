@@ -1,6 +1,6 @@
 ﻿namespace GtpApi.Dto;
 
-public class GptCompletionRequestDto
+public class CompletionRequestDto
 {
     public string Model { get; set; }
     public string Question { get; set; }
