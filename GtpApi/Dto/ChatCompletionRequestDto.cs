@@ -1,31 +1,36 @@
-﻿using GtpApi.Dto.ChatCompletions;
+﻿using GtpApi.Dto.Gpt;
+using GtpApi.Dto.Gpt.ChatCompletions;
+using System.Text.Json.Serialization;
 
 namespace GtpApi.Dto;
 
-public class ChatCompletionRequestDto : CompletionRequestDto
+public class ChatCompletionRequestDto
 {
+    [JsonIgnore]
+    public string? Model { get; set; }
+    public string Question { get; set; }
     public string? SetupMessage { get; set; }
 
     public GptChatCompletionRequestDto ToGptChatCompletionRequestDto()
     {
         GptChatCompletionRequestDto requestDto = new GptChatCompletionRequestDto();
 
-        requestDto.model = this.Model;
-        requestDto.messages = new List<GptMessageDto>
+        requestDto.Model = Model;
+        requestDto.Messages = new List<GptMessageDto>
         {
             new GptMessageDto
             {
-                role = "user",
-                content = this.Question
+                Role = "user",
+                Content = Question
             }
         };
 
-        if (!string.IsNullOrWhiteSpace(this.SetupMessage))
+        if (!string.IsNullOrWhiteSpace(SetupMessage))
         {
-            requestDto.messages.Add(new GptMessageDto
+            requestDto.Messages.Add(new GptMessageDto
             {
-                role = "system",
-                content = this.SetupMessage
+                Role = "system",
+                Content = SetupMessage
             });
         }
 

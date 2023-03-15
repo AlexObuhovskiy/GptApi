@@ -1,19 +1,20 @@
 ﻿using GtpApi.Dto;
-using GtpApi.Dto.ChatCompletions;
+using GtpApi.Dto.Gpt.ChatCompletions;
+using GtpApi.Dto.Gpt.Completions;
 using GtpApi.Setup;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 
 namespace GtpApi.Services;
 
 public interface IGptHttpClient
 {
     Task<string> GetGptModels();
-    Task<GptCompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto);
-    Task<GptCompletionResponseDto> GenerateChatCompletionAsync(ChatCompletionRequestDto requestDto);
+    Task<CompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto);
+    Task<CompletionResponseDto> GenerateChatCompletionAsync(ChatCompletionRequestDto requestDto);
 }
 
 public class GptHttpClient : IGptHttpClient
@@ -42,44 +43,76 @@ public class GptHttpClient : IGptHttpClient
         return responseJson;
     }
 
-    public async Task<GptCompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto)
+    public async Task<CompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto)
     {
-        var request = new
+        var request = new GptCompletionRequestDto
         {
-            model = requestDto.Model,
-            prompt = requestDto.Question,
-            max_tokens = requestDto.MaxTokens,
-            temperature = requestDto.Temperature
+            Model = requestDto.Model!,
+            Prompt = requestDto.Question,
+            MaxTokens = requestDto.MaxTokens,
+            Temperature = requestDto.Temperature
         };
 
         var completionsUri = new Uri(_openAiGptUrl, Completions);
-        var gptResponseDto = await SendMessageAsync(completionsUri, request);
+        var responseDto = await SendMessageAsync(completionsUri, request);
 
-        var gptCompletionResponseDto = Map(requestDto, gptResponseDto);
-        string chatResponseMessage = gptResponseDto.ResponseObject.choices[0].text;
-        gptCompletionResponseDto.ChatResponse = chatResponseMessage.TrimStart('\n', '\t', '\r');
+        var gptCompletionResponse = JsonSerializer.Deserialize<GptCompletionResponseDto>(responseDto.ResponseJson);
+        if (gptCompletionResponse == null)
+        {
+            throw new Exception($"Can't deserialize: {responseDto.ResponseJson}.");
+        }
+
+        var gptCompletionResponseDto = new CompletionResponseDto
+        {
+            ChatRequest = requestDto.Question,
+            ElapsedMilliseconds = responseDto.Stopwatch.ElapsedMilliseconds,
+            Model = requestDto.Model!,
+            MaxTokens = requestDto.MaxTokens,
+            Temperature = requestDto.Temperature,
+            RequestDateTime = DateTime.UtcNow,
+            QuestionTokenAmount = gptCompletionResponse.Usage.PromptTokens,
+            ResponseTokenAmount = gptCompletionResponse.Usage.CompletionTokens,
+            TotalTokenAmount = gptCompletionResponse.Usage.TotalTokens,
+            ChatResponse = gptCompletionResponse.Choices.First().Text.TrimStart('\n', '\t', '\r')
+        };
 
         return gptCompletionResponseDto;
     }
 
-    public async Task<GptCompletionResponseDto> GenerateChatCompletionAsync(ChatCompletionRequestDto requestDto)
+    public async Task<CompletionResponseDto> GenerateChatCompletionAsync(ChatCompletionRequestDto requestDto)
     {
         var request = requestDto.ToGptChatCompletionRequestDto();
 
         var completionsUri = new Uri(_openAiGptUrl, $"{Chat}/{Completions}");
-        var gptResponseDto = await SendMessageAsync(completionsUri, request);
+        var responseDto = await SendMessageAsync(completionsUri, request);
 
-        var gptCompletionResponseDto = Map(requestDto, gptResponseDto);
-        string chatResponseMessage = gptResponseDto.ResponseObject.choices[0].message.content;
-        gptCompletionResponseDto.ChatResponse = chatResponseMessage.TrimStart('\n', '\t', '\r');
+        var gptChatCompletionResponse = JsonSerializer.Deserialize<GptChatCompletionResponseDto>(responseDto.ResponseJson);
+        if (gptChatCompletionResponse == null)
+        {
+            throw new Exception($"Can't deserialize: {responseDto.ResponseJson}.");
+        }
+
+        var gptCompletionResponseDto = new CompletionResponseDto
+        {
+            ChatRequest = requestDto.Question,
+            ElapsedMilliseconds = responseDto.Stopwatch.ElapsedMilliseconds,
+            Model = requestDto.Model!,
+            RequestDateTime = DateTime.UtcNow,
+            QuestionTokenAmount = gptChatCompletionResponse.Usage.PromptTokens,
+            ResponseTokenAmount = gptChatCompletionResponse.Usage.CompletionTokens,
+            TotalTokenAmount = gptChatCompletionResponse.Usage.TotalTokens,
+            ChatResponse = gptChatCompletionResponse.Choices.First().Message.Content.TrimStart('\n', '\t', '\r')
+        };
 
         return gptCompletionResponseDto;
     }
 
-    private async Task<GptResponseDto> SendMessageAsync(Uri uri, object request)
+    private async Task<ClientResponseDto> SendMessageAsync(Uri uri, object request)
     {
-        var result = new GptResponseDto();
-        var requestJson = JsonConvert.SerializeObject(request);
+        var result = new ClientResponseDto();
+
+        var requestJson = JsonSerializer.Serialize(request);
+
         var content = new StringContent(requestJson, Encoding.UTF8, MediaTypeNames.Application.Json);
 
         result.Stopwatch = new Stopwatch();
@@ -93,35 +126,8 @@ public class GptHttpClient : IGptHttpClient
         }
 
         var responseJson = await response.Content.ReadAsStringAsync();
-        var responseObject = JsonConvert.DeserializeObject<dynamic>(responseJson);
-        result.ResponseObject = responseObject!;
+        result.ResponseJson = responseJson;
 
         return result;
-    }
-
-    private static GptCompletionResponseDto Map(ChatCompletionRequestDto requestDto, GptResponseDto gptResponseDto)
-    {
-        var gptCompletionResponseDto = Map(requestDto as CompletionRequestDto, gptResponseDto);
-        gptCompletionResponseDto.ChatSetupMessage = requestDto.SetupMessage;
-
-        return gptCompletionResponseDto;
-    }
-
-    private static GptCompletionResponseDto Map(CompletionRequestDto requestDto, GptResponseDto gptResponseDto)
-    {
-        var gptCompletionResponseDto = new GptCompletionResponseDto
-        {
-            ChatRequest = requestDto.Question,
-            ElapsedMilliseconds = gptResponseDto.Stopwatch.ElapsedMilliseconds,
-            Model = requestDto.Model,
-            MaxTokens = requestDto.MaxTokens,
-            Temperature = requestDto.Temperature,
-            RequestDateTime = DateTime.UtcNow,
-            QuestionTokenAmount = gptResponseDto.ResponseObject.usage.prompt_tokens,
-            ResponseTokenAmount = gptResponseDto.ResponseObject.usage.completion_tokens,
-            TotalTokenAmount = gptResponseDto.ResponseObject.usage.total_tokens,
-        };
-
-        return gptCompletionResponseDto;
     }
 }

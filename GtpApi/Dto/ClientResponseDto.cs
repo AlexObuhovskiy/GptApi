@@ -2,8 +2,8 @@
 
 namespace GtpApi.Dto;
 
-public class GptResponseDto
+public class ClientResponseDto
 {
-    public dynamic ResponseObject { get; set; }
+    public string ResponseJson { get; set; }
     public Stopwatch Stopwatch { get; set; }
 }

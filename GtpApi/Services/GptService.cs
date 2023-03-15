@@ -7,8 +7,8 @@ namespace GtpApi.Services
     public interface IGptService
     {
         Task<string> GetGptModels();
-        Task<GptCompletionResponseDto> GenerateCompletionAsync(GenerateCompletionRequestDto requestDto);
-        Task<GptCompletionResponseDto> GenerateChatCompletion(GenerateChatCompletionRequestDto requestDto);
+        Task<CompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto);
+        Task<CompletionResponseDto> GenerateChatCompletion(ChatCompletionRequestDto requestDto);
     }
 
     public class GptService : IGptService
@@ -29,22 +29,18 @@ namespace GtpApi.Services
             return _gptHttpClient.GetGptModels();
         }
 
-        public async Task<GptCompletionResponseDto> GenerateCompletionAsync(GenerateCompletionRequestDto requestDto)
+        public async Task<CompletionResponseDto> GenerateCompletionAsync(CompletionRequestDto requestDto)
         {
-            var request = new CompletionRequestDto
-            {
-                //Model = "text-ada-001",
-                Model = "text-davinci-003",
-                Question = requestDto.Question,
-                MaxTokens = 100,
-                Temperature = 0.5
-            };
+            //Model = "text-ada-001",
+            requestDto.Model = "text-davinci-003";
+            requestDto.MaxTokens = 100;
+            requestDto.Temperature = 0.5;
 
-            var result = await _gptHttpClient.GenerateCompletionAsync(request);
+            var result = await _gptHttpClient.GenerateCompletionAsync(requestDto);
             var chatInfo = new ChatInfo
             {
                 ChatRequest = result.ChatRequest,
-                ChatResponse = result.ChatResponse.Trim('\n', '\t', '\r', ' '),
+                ChatResponse = result.ChatResponse,
                 ElapsedMilliseconds = result.ElapsedMilliseconds,
                 Model = result.Model,
                 MaxTokens = result.MaxTokens,
@@ -62,28 +58,19 @@ namespace GtpApi.Services
             return result;
         }
 
-        public async Task<GptCompletionResponseDto> GenerateChatCompletion(GenerateChatCompletionRequestDto requestDto)
+        public async Task<CompletionResponseDto> GenerateChatCompletion(ChatCompletionRequestDto requestDto)
         {
-            var request = new ChatCompletionRequestDto
-            {
-                //Model = "gpt-3.5-turbo",
-                Model = "gpt-3.5-turbo-0301",
-                MaxTokens = 100,
-                Temperature = 0.5,
-                Question = requestDto.Question,
-                SetupMessage = requestDto.SetupMessage
-            };
+            //Model = "gpt-3.5-turbo",
+            requestDto.Model = "gpt-3.5-turbo-0301";
 
-            var result = await _gptHttpClient.GenerateChatCompletionAsync(request);
+            var result = await _gptHttpClient.GenerateChatCompletionAsync(requestDto);
             var chatInfo = new ChatInfo
             {
                 ChatRequest = result.ChatRequest,
                 ChatSetupMessage = result.ChatSetupMessage,
-                ChatResponse = result.ChatResponse.Trim('\n', '\t', '\r', ' '),
+                ChatResponse = result.ChatResponse,
                 ElapsedMilliseconds = result.ElapsedMilliseconds,
                 Model = result.Model,
-                MaxTokens = result.MaxTokens,
-                Temperature = result.Temperature,
                 RequestDateTime = result.RequestDateTime,
                 QuestionTokenAmount = result.QuestionTokenAmount,
                 ResponseTokenAmount = result.ResponseTokenAmount,

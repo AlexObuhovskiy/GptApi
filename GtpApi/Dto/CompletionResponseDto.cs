@@ -1,11 +1,11 @@
 ﻿namespace GtpApi.Dto;
 
-public class GptCompletionResponseDto
+public class CompletionResponseDto
 {
     public Guid Id { get; set; }
     public string Model { get; set; }
-    public int MaxTokens { get; set; }
-    public double Temperature { get; set; }
+    public int? MaxTokens { get; set; }
+    public double? Temperature { get; set; }
     public string ChatRequest { get; set; }
     public string ChatSetupMessage { get; set; }
     public string ChatResponse { get; set; }
