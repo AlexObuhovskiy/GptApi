@@ -12,12 +12,14 @@ public interface IGptHttpClient
 {
     Task<string> GetGptModels();
     Task<GptCompletionResponseDto> GenerateCompletionAsync(GptCompletionRequestDto requestDto);
+    Task<GptCompletionResponseDto> GenerateChatCompletionAsync(GptChatCompletionRequestDto requestDto);
 }
 
 public class GptHttpClient : IGptHttpClient
 {
-    private readonly Uri _openAiGptUrl = new("https://api.openai.com/v1/completions");
+    private readonly Uri _openAiGptUrl = new("https://api.openai.com/v1/");
     private const string Completions = "completions";
+    private const string Chat = "chat";
     private const string Models = "models";
 
     private readonly HttpClient _httpClient;
@@ -72,6 +74,62 @@ public class GptHttpClient : IGptHttpClient
         var gptCompletionResponseDto = new GptCompletionResponseDto
         {
             ChatRequest = requestDto.Question,
+            ChatResponse = responseText.TrimStart('\n', '\t', '\r'),
+            ElapsedMilliseconds = a.ElapsedMilliseconds,
+            Model = requestDto.Model,
+            MaxTokens = requestDto.MaxTokens,
+            Temperature = requestDto.Temperature,
+            RequestDateTime = DateTime.UtcNow,
+            QuestionTokenAmount = responseObject.usage.prompt_tokens,
+            ResponseTokenAmount = responseObject.usage.completion_tokens,
+            TotalTokenAmount = responseObject.usage.total_tokens,
+        };
+
+        return gptCompletionResponseDto;
+    }
+
+    public async Task<GptCompletionResponseDto> GenerateChatCompletionAsync(GptChatCompletionRequestDto requestDto)
+    {
+        var request = new
+        {
+            model = requestDto.Model,
+            messages = new[] {
+                new 
+                {
+                    role = "system",
+                    content = requestDto.SetupMessage
+                },
+                new
+                {
+                    role = "user",
+                    content = requestDto.Question
+                },
+            }
+        };
+
+        var requestJson = JsonConvert.SerializeObject(request);
+        var content = new StringContent(requestJson, Encoding.UTF8, MediaTypeNames.Application.Json);
+        var completionsUri = new Uri(_openAiGptUrl, $"{Chat}/{Completions}");
+
+        Stopwatch a = new Stopwatch();
+        a.Start();
+        var response = await _httpClient.PostAsync(completionsUri, content);
+        a.Stop();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception("Failed to generate text from OpenAI");
+        }
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        var responseObject = JsonConvert.DeserializeObject<dynamic>(responseJson);
+
+        string responseText = responseObject!.choices[0].message.content;
+
+        var gptCompletionResponseDto = new GptCompletionResponseDto
+        {
+            ChatRequest = requestDto.Question,
+            ChatSetupMessage = requestDto.SetupMessage,
             ChatResponse = responseText.TrimStart('\n', '\t', '\r'),
             ElapsedMilliseconds = a.ElapsedMilliseconds,
             Model = requestDto.Model,

@@ -1,6 +1,6 @@
 ﻿namespace GtpApi.Dto;
 
-public class GenerateTextRequestDto
+public class GenerateCompletionRequestDto
 {
     public string Question { get; set; }
 }

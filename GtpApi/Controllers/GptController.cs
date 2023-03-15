@@ -25,9 +25,17 @@ namespace GtpApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GenerateTextAsync([FromBody] GenerateTextRequestDto requestDto)
+        public async Task<IActionResult> GenerateTextAsync([FromBody] GenerateCompletionRequestDto requestDto)
         {
             var result = await _gptService.GenerateCompletionAsync(requestDto);
+
+            return Ok(result);
+        }
+
+        [HttpPost("chat")]
+        public async Task<IActionResult> GenerateTextAsync([FromBody] GenerateChatCompletionRequestDto requestDto)
+        {
+            var result = await _gptService.GenerateChatCompletion(requestDto);
 
             return Ok(result);
         }
