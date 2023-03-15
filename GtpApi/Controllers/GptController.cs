@@ -24,7 +24,7 @@ namespace GtpApi.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
+        [HttpPost("completions")]
         public async Task<IActionResult> GenerateTextAsync([FromBody] GenerateCompletionRequestDto requestDto)
         {
             var result = await _gptService.GenerateCompletionAsync(requestDto);
@@ -32,7 +32,7 @@ namespace GtpApi.Controllers
             return Ok(result);
         }
 
-        [HttpPost("chat")]
+        [HttpPost("chat/completions")]
         public async Task<IActionResult> GenerateTextAsync([FromBody] GenerateChatCompletionRequestDto requestDto)
         {
             var result = await _gptService.GenerateChatCompletion(requestDto);

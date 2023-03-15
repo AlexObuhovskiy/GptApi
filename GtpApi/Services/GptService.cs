@@ -35,7 +35,6 @@ namespace GtpApi.Services
             {
                 //Model = "text-ada-001",
                 Model = "text-davinci-003",
-                //Model = "gpt-3.5-turbo",
                 Question = requestDto.Question,
                 MaxTokens = 100,
                 Temperature = 0.5
@@ -67,7 +66,8 @@ namespace GtpApi.Services
         {
             var request = new GptChatCompletionRequestDto
             {
-                Model = "gpt-3.5-turbo",
+                //Model = "gpt-3.5-turbo",
+                Model = "gpt-3.5-turbo-0301",
                 MaxTokens = 100,
                 Temperature = 0.5,
                 Question = requestDto.Question,
