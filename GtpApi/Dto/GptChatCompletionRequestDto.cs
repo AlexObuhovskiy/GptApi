@@ -1,10 +1,6 @@
 ﻿namespace GtpApi.Dto;
 
-public class GptChatCompletionRequestDto
+public class GptChatCompletionRequestDto : GptCompletionRequestDto
 {
-    public string Model { get; set; }
-    public string Question { get; set; }
-    public string SetupMessage { get; set; }
-    public int MaxTokens { get; set; }
-    public double Temperature { get; set; }
+    public string? SetupMessage { get; set; }
 }

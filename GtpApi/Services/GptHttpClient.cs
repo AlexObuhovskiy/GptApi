@@ -54,21 +54,9 @@ public class GptHttpClient : IGptHttpClient
         var completionsUri = new Uri(_openAiGptUrl, Completions);
         var gptResponseDto = await SendMessageAsync(completionsUri, request);
                
-        string responseText = gptResponseDto.ResponseObject.choices[0].text;
-
-        var gptCompletionResponseDto = new GptCompletionResponseDto
-        {
-            ChatRequest = requestDto.Question,
-            ChatResponse = responseText.TrimStart('\n', '\t', '\r'),
-            ElapsedMilliseconds = gptResponseDto.Stopwatch.ElapsedMilliseconds,
-            Model = requestDto.Model,
-            MaxTokens = requestDto.MaxTokens,
-            Temperature = requestDto.Temperature,
-            RequestDateTime = DateTime.UtcNow,
-            QuestionTokenAmount = gptResponseDto.ResponseObject.usage.prompt_tokens,
-            ResponseTokenAmount = gptResponseDto.ResponseObject.usage.completion_tokens,
-            TotalTokenAmount = gptResponseDto.ResponseObject.usage.total_tokens,
-        };
+        var gptCompletionResponseDto = Map(requestDto, gptResponseDto);
+        string chatResponseMessage = gptResponseDto.ResponseObject.choices[0].text;
+        gptCompletionResponseDto.ChatResponse = chatResponseMessage.TrimStart('\n', '\t', '\r');
 
         return gptCompletionResponseDto;
     }
@@ -93,24 +81,11 @@ public class GptHttpClient : IGptHttpClient
         };
 
         var completionsUri = new Uri(_openAiGptUrl, $"{Chat}/{Completions}");
-        var gptResponseDto = await SendMessageAsync(completionsUri, request);        
-
-        string responseText = gptResponseDto.ResponseObject.choices[0].message.content;
-
-        var gptCompletionResponseDto = new GptCompletionResponseDto
-        {
-            ChatRequest = requestDto.Question,
-            ChatSetupMessage = requestDto.SetupMessage,
-            ChatResponse = responseText.TrimStart('\n', '\t', '\r'),
-            ElapsedMilliseconds = gptResponseDto.Stopwatch.ElapsedMilliseconds,
-            Model = requestDto.Model,
-            MaxTokens = requestDto.MaxTokens,
-            Temperature = requestDto.Temperature,
-            RequestDateTime = DateTime.UtcNow,
-            QuestionTokenAmount = gptResponseDto.ResponseObject.usage.prompt_tokens,
-            ResponseTokenAmount = gptResponseDto.ResponseObject.usage.completion_tokens,
-            TotalTokenAmount = gptResponseDto.ResponseObject.usage.total_tokens,
-        };
+        var gptResponseDto = await SendMessageAsync(completionsUri, request);
+        
+        var gptCompletionResponseDto = Map(requestDto, gptResponseDto);
+        string chatResponseMessage = gptResponseDto.ResponseObject.choices[0].message.content;
+        gptCompletionResponseDto.ChatResponse = chatResponseMessage.TrimStart('\n', '\t', '\r');
 
         return gptCompletionResponseDto;
     }
@@ -136,5 +111,31 @@ public class GptHttpClient : IGptHttpClient
         result.ResponseObject = responseObject!;
 
         return result;
+    }
+
+    private static GptCompletionResponseDto Map(GptChatCompletionRequestDto requestDto, GptResponseDto gptResponseDto)
+    {
+        var gptCompletionResponseDto = Map(requestDto as GptCompletionRequestDto, gptResponseDto);
+        gptCompletionResponseDto.ChatSetupMessage = requestDto.SetupMessage;
+
+        return gptCompletionResponseDto;
+    }
+
+    private static GptCompletionResponseDto Map(GptCompletionRequestDto requestDto, GptResponseDto gptResponseDto)
+    {
+        var gptCompletionResponseDto = new GptCompletionResponseDto
+        {
+            ChatRequest = requestDto.Question,
+            ElapsedMilliseconds = gptResponseDto.Stopwatch.ElapsedMilliseconds,
+            Model = requestDto.Model,
+            MaxTokens = requestDto.MaxTokens,
+            Temperature = requestDto.Temperature,
+            RequestDateTime = DateTime.UtcNow,
+            QuestionTokenAmount = gptResponseDto.ResponseObject.usage.prompt_tokens,
+            ResponseTokenAmount = gptResponseDto.ResponseObject.usage.completion_tokens,
+            TotalTokenAmount = gptResponseDto.ResponseObject.usage.total_tokens,
+        };
+
+        return gptCompletionResponseDto;
     }
 }
